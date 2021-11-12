@@ -1,4 +1,4 @@
-import * as createHmac from 'create-hmac'
+import { createHmac } from 'crypto';
 import * as nacl from 'tweetnacl'
 
 import { replaceDerive, pathRegex } from './utils';
