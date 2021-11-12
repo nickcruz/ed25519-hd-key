@@ -1,33 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.derivePath = exports.isValidPath = exports.getPublicKey = exports.getMasterKeyFromSeed = void 0;
-const crypto_1 = require("crypto");
+const sha2_1 = require("@ethersproject/sha2");
 const nacl = require("tweetnacl");
 const utils_1 = require("./utils");
 const ED25519_CURVE = 'ed25519 seed';
 const HARDENED_OFFSET = 0x80000000;
 exports.getMasterKeyFromSeed = (seed) => {
-    const hmac = crypto_1.createHmac('sha512', ED25519_CURVE);
-    const I = hmac.update(Buffer.from(seed, 'hex')).digest();
-    const IL = I.slice(0, 32);
-    const IR = I.slice(32);
+    const hmac = sha2_1.computeHmac(sha2_1.SupportedAlgorithm.sha512, Buffer.from(ED25519_CURVE), Buffer.from(seed, 'hex'));
+    const minus0x = hmac.slice(2);
+    const IL = minus0x.slice(0, 64);
+    const IR = minus0x.slice(64);
     return {
-        key: IL,
-        chainCode: IR,
+        key: Buffer.from(IL, 'hex'),
+        chainCode: Buffer.from(IR, 'hex'),
     };
 };
 const CKDPriv = ({ key, chainCode }, index) => {
     const indexBuffer = Buffer.allocUnsafe(4);
     indexBuffer.writeUInt32BE(index, 0);
     const data = Buffer.concat([Buffer.alloc(1, 0), key, indexBuffer]);
-    const I = crypto_1.createHmac('sha512', chainCode)
-        .update(data)
-        .digest();
-    const IL = I.slice(0, 32);
-    const IR = I.slice(32);
+    const hmac = sha2_1.computeHmac(sha2_1.SupportedAlgorithm.sha512, chainCode, data);
+    const minus0x = hmac.slice(2);
+    const IL = minus0x.slice(0, 64);
+    const IR = minus0x.slice(64);
     return {
-        key: IL,
-        chainCode: IR,
+        key: Buffer.from(IL, 'hex'),
+        chainCode: Buffer.from(IR, 'hex'),
     };
 };
 exports.getPublicKey = (privateKey, withZeroByte = true) => {

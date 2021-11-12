@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { computeHmac, SupportedAlgorithm } from '@ethersproject/sha2';
 import * as nacl from 'tweetnacl'
 
 import { replaceDerive, pathRegex } from './utils';
@@ -20,13 +20,13 @@ const ED25519_CURVE = 'ed25519 seed';
 const HARDENED_OFFSET = 0x80000000;
 
 export const getMasterKeyFromSeed = (seed: Hex): Keys => {
-    const hmac = createHmac('sha512', ED25519_CURVE);
-    const I = hmac.update(Buffer.from(seed, 'hex')).digest();
-    const IL = I.slice(0, 32);
-    const IR = I.slice(32);
+    const hmac = computeHmac(SupportedAlgorithm.sha512, Buffer.from(ED25519_CURVE), Buffer.from(seed, 'hex'));
+    const minus0x = hmac.slice(2);
+    const IL = minus0x.slice(0, 64);
+    const IR = minus0x.slice(64);
     return {
-        key: IL,
-        chainCode: IR,
+        key: Buffer.from(IL, 'hex'),
+        chainCode: Buffer.from(IR, 'hex'),
     };
 };
 
@@ -36,14 +36,13 @@ const CKDPriv = ({ key, chainCode }: Keys, index: number): Keys => {
 
     const data = Buffer.concat([Buffer.alloc(1, 0), key, indexBuffer]);
 
-    const I = createHmac('sha512', chainCode)
-        .update(data)
-        .digest();
-    const IL = I.slice(0, 32);
-    const IR = I.slice(32);
+    const hmac = computeHmac(SupportedAlgorithm.sha512, chainCode, data);
+    const minus0x = hmac.slice(2);
+    const IL = minus0x.slice(0, 64);
+    const IR = minus0x.slice(64);
     return {
-        key: IL,
-        chainCode: IR,
+        key: Buffer.from(IL, 'hex'),
+        chainCode: Buffer.from(IR, 'hex'),
     };
 };
 

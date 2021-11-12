@@ -48,8 +48,8 @@
   "author": "Aleksey Popov",
   "license": "MIT",
   "dependencies": {
+    "@ethersproject/sha2": "^5.5.0",
     "bip39": "3.0.2",
-    "create-hmac": "1.1.7",
     "tweetnacl": "1.0.3"
   },
   "devDependencies": {
